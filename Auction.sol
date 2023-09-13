@@ -2,6 +2,15 @@
 
 pragma solidity >=0.5.0 <0.9.0;
 
+contract AuctionCreator{
+    Auction[] public auctions;
+
+    function createAuction() public{
+        Auction newAuction = new Auction(msg.sender);
+        auctions.push(newAuction);
+    }
+}
+
 contract Auction{
     address payable public owner;
     uint public startBlock;
@@ -17,13 +26,13 @@ contract Auction{
     mapping(address => uint) public bids;
     uint bidIncrement;
 
-    constructor(){
-        owner = payable(msg.sender);
+    constructor(address eoa){
+        owner = payable(eoa);
         auctionState = State.Running;
         startBlock = block.number;
-        endBlock = startBlock + 40320;
+        endBlock = startBlock + 3;
         ipfsHash = "";
-        bidIncrement = 100;
+        bidIncrement = 1000000000000000000;
     }
 
     modifier notOwner(){
@@ -73,12 +82,13 @@ contract Auction{
             highestBindingBid = min(currentBid, bids[highestBidder] + bidIncrement);
             highestBidder = payable(msg.sender);
         }
+        // return true;
     }
 
     function finalizeAuction() public{
         require(auctionState == State.Canceled || block.number > endBlock);
         require(msg.sender == owner || bids[msg.sender] > 0);
-    }
+    
 
     address payable recipient;
     uint value;
@@ -99,6 +109,10 @@ contract Auction{
                 value = bids[msg.sender];
             }
         }
-        recipient.transfer(value);
+   
     }
+     bids[recipient] = 0;
+
+        recipient.transfer(value);
+}
 }
